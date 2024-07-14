@@ -1,4 +1,10 @@
 #include "DeutschlandreiseData.h"
+#include "TopologyData.h"
+
+DeutschlandreiseData::~DeutschlandreiseData()
+{
+    delete topologyData;
+}
 
 DeutschlandreiseInputData DeutschlandreiseData::GetDeutschlandreiseInputData() const
 {
@@ -8,4 +14,15 @@ DeutschlandreiseInputData DeutschlandreiseData::GetDeutschlandreiseInputData() c
 void DeutschlandreiseData::SetDeutschlandreiseInputData(const DeutschlandreiseInputData& _deutschlandreiseInputData)
 {
     deutschlandreiseInputData = _deutschlandreiseInputData;
+}
+
+const TopologyData& DeutschlandreiseData::GetTopologyData() const
+{
+    return *topologyData;
+}
+    
+void DeutschlandreiseData::SetTopologyData(TopologyData* _topologyData)
+{
+    delete topologyData;
+    topologyData = _topologyData;
 }
