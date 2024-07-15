@@ -3,13 +3,16 @@
 
 struct NodeData
 {
-    std::string id;
+    std::string cityName;
+    size_t id;
 };
 
 struct EdgeData
 {
     const NodeData* origin;
     const NodeData* destination;
+    int weight;
+    bool isFlight;
 };
 
 struct TopologyData
@@ -22,7 +25,7 @@ struct TopologyData
     
     const NodeData* FindNodeData(const std::string& idSearchNode) const
     {
-        std::vector<NodeData*>::const_iterator it = std::find_if(nodes.begin(), nodes.end(), [=] (const NodeData* nodeData) { return nodeData->id == idSearchNode; } );
+        std::vector<NodeData*>::const_iterator it = std::find_if(nodes.begin(), nodes.end(), [=] (const NodeData* nodeData) { return nodeData->cityName == idSearchNode; } );
         if (it == nodes.end()) return nullptr;
         return *it;
     }

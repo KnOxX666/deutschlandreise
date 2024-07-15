@@ -8,7 +8,9 @@
 
 JourneyCalculator::JourneyCalculator(const DeutschlandreiseData& _data)
     : data(_data)
+    , graph(nullptr)
 {
+    CreateGraph();
 }
 
 std::vector<std::string> JourneyCalculator::CreateCompleteRouteCandidate(const std::vector<std::string>& transitCitiesRouteCandidate)
@@ -27,7 +29,7 @@ void JourneyCalculator::Calculate()
     do 
     {
         std::vector<std::string> routeCandidate = CreateCompleteRouteCandidate(transitCities);
-        int length = CalculatePathLength(routeCandidate);
+        //int length = CalculatePathLength(routeCandidate);
     } while (std::next_permutation(transitCities.begin(), transitCities.end()));
 }
 
@@ -43,39 +45,10 @@ void PrintRoute(const std::vector<std::string>& routeCandidate)
     std::cout << std::endl;
 }
 
-struct Node
-{
-     NodeData* data;
-     NodeData* link;
-};
 
-void JourneyCalculator::CreateGraph(const std::string& origin, const std::string& destination) const
+void JourneyCalculator::CreateGraph()
 {
-    if (data.IsDebug()) std::cout << "    Creating graph: " << origin << " - " << destination << std::endl;
-
-    const NodeData* nodeData = data.GetTopologyData().FindNodeData(origin);
-    
-    for (size_t i = 0; i < data.GetTopologyData().edges.size(); ++i)
-    {
-        if (data.GetTopologyData().edges[i]->origin == nodeData)
-        {
-            std::cout << " --> " << data.GetTopologyData().edges[i]->destination->id << std::endl;
-            
-        }
-    }
-}
-
-int JourneyCalculator::CalculatePathLength(const std::vector<std::string>& routeCandidate) const
-{
-    if (data.IsDebug())
-    {
-        std::cout << "Calculating path: ";
-        PrintRoute(routeCandidate);
-    }
-    for (size_t i = 1; i < routeCandidate.size(); ++i)
-    {
-        CreateGraph(routeCandidate[i - 1], routeCandidate[i]);
-        break; // TODO: remove
-    }
-    return -1;
+    delete graph;
+    // the value -1 represents missing nodes:
+    graph = new AdjacentMatrix(data.GetTopologyData().nodes.size(), std::vector<int>(data.GetTopologyData().nodes.size(), -1));
 }
