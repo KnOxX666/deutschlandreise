@@ -20,22 +20,14 @@ void AusgabeInput(const DeutschlandreiseInputData& inputData)
     std::cout << std::endl;
 }
 
-// TODO: Avoid code duplication (also implemented in JSonLoader)
-const NodeData* FindNodeData2(const std::vector<NodeData*>& nodes, const std::string& idSearchNode)
-{
-    std::vector<NodeData*>::const_iterator it = std::find_if(nodes.begin(), nodes.end(), [=] (const NodeData* nodeData) { return nodeData->id == idSearchNode; } );
-    if (it == nodes.end()) return nullptr;
-    return *it;
-}
-
-bool CheckInput(const std::string& city, const std::vector<std::string>& alreadyEnteredCities, const std::vector<NodeData*>& nodeData)
+bool CheckInput(const std::string& city, const std::vector<std::string>& alreadyEnteredCities, const TopologyData& topologyData)
 {
     if (std::find(alreadyEnteredCities.begin(), alreadyEnteredCities.end(), city) != alreadyEnteredCities.end())
     {
         std::cout << "Error: Eingegebene Stadt " << city << " schon eingegeben, bitte eine andere Stadt eingeben!" << std::endl;
         return false;
     }
-    if (FindNodeData2(nodeData, city) == nullptr)
+    if (topologyData.FindNodeData(city) == nullptr)
     {
         std::cout << "Error: Eingegebene Stadt " << city << " unbekannt, bitte eine Stadt eingeben, die im Spiel Deutschlandreise bekannt ist!" << std::endl;
         return false;
@@ -43,13 +35,13 @@ bool CheckInput(const std::string& city, const std::vector<std::string>& already
     return true;
 }
 
-DeutschlandreiseInputData JourneyInput::Input (const std::vector<NodeData*> nodeData) const
+DeutschlandreiseInputData JourneyInput::Input (const TopologyData& topologyData) const
 {
     DeutschlandreiseInputData inputData;
 
     std::cout << "Startreisepunkt eingeben: ";
     std::cin >> inputData.originAndDestinationCity;
-    if (not CheckInput(inputData.originAndDestinationCity, inputData.transitCities, nodeData))
+    if (not CheckInput(inputData.originAndDestinationCity, inputData.transitCities, topologyData))
     {
         exit(1);
     }
@@ -59,7 +51,7 @@ DeutschlandreiseInputData JourneyInput::Input (const std::vector<NodeData*> node
         std::cout << "Bitte " << i << ". Zwischenstopp eingeben: ";
         std::string transitCity;
         std::cin >> transitCity;
-        if (CheckInput(transitCity, inputData.transitCities, nodeData))
+        if (CheckInput(transitCity, inputData.transitCities, topologyData))
         {
             inputData.transitCities.push_back(transitCity);
         }

@@ -32,6 +32,8 @@ TopologyData* JSonLoader::Load()
         EdgeData* edgeData = new EdgeData();
         edgeData->origin = FindNodeData(topologyData->nodes, topology["links"][i]["source"].asString());
         edgeData->destination = FindNodeData(topologyData->nodes, topology["links"][i]["target"].asString());
+        topologyData->edges.push_back(edgeData);
+        if (edgeData->origin == nullptr || edgeData->destination == nullptr) abort();
     }
     
     return topologyData;

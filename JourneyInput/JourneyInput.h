@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
 class DeutschlandreiseInputData;
-class NodeData;
+class TopologyData;
 
 class JourneyInput
 {
 public:
-    DeutschlandreiseInputData Input (const std::vector<NodeData*> nodeData) const;
+    DeutschlandreiseInputData Input (const TopologyData& topologyData) const;
 };
