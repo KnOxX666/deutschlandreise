@@ -11,12 +11,22 @@ JourneyCalculator::JourneyCalculator(const DeutschlandreiseData& _data)
     , graph(nullptr)
 {
     CreateGraph();
+    int i = 0;
+    for (auto& node : *graph)
+    {
+        std::cout << data.GetTopologyData().nodes[i]->cityName << "[" << i << "]" << std::endl;
+        for (auto& neighbor : node)
+        {
+            std::cout << "    " << data.GetTopologyData().nodes[neighbor.to]->cityName << std::endl;
+        }
+        ++i;
+    }
 }
 
 void JourneyCalculator::CreateGraph()
 {
     delete graph;
-    graph = new  AdjList(data.GetTopologyData().nodes.size());
+    graph = new AdjList(data.GetTopologyData().nodes.size());
     for (auto& edge : data.GetTopologyData().edges)
     {
         // add all edges to corresponding origin nodes:
@@ -36,13 +46,22 @@ std::vector<std::string> JourneyCalculator::CreateCompleteRouteCandidate(const s
 void JourneyCalculator::Calculate()
 {
     std::vector<std::string> transitCities = data.GetDeutschlandreiseInputData().transitCities;
-    
+    std::cout << "Calc from " << data.GetTopologyData().nodes[0]->cityName << " to " << data.GetTopologyData().nodes[137]->cityName << std::endl;
+    auto result = Dijkstra(148, 149);
+    std::cout << "distancee = " << result.first << std::endl;
+    std::cout << "shortest route = ";
+    for (auto& cityId : result.second) 
+    {
+        std::cout << data.GetTopologyData().nodes[cityId]->cityName << " - " << std::endl;
+    }
+    /*
     do 
     {
         std::vector<std::string> routeCandidate = CreateCompleteRouteCandidate(transitCities);
         //int length = CalculatePathLength(routeCandidate);
-        Dijkstra(0, 1);
+        
     } while (std::next_permutation(transitCities.begin(), transitCities.end()));
+    */
 }
 
 void PrintRoute(const std::vector<std::string>& routeCandidate)
