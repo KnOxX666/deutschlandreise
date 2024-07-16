@@ -35,6 +35,10 @@ bool CheckInput(const std::string& city, const std::vector<std::string>& already
     return true;
 }
 
+bool IsNumber(const std::string &str) {    
+    return !str.empty() && str.find_first_not_of("0123456789") == std::string::npos;
+}
+
 DeutschlandreiseInputData JourneyInput::Input (const TopologyData& topologyData) const
 {
     DeutschlandreiseInputData inputData;
@@ -45,8 +49,11 @@ DeutschlandreiseInputData JourneyInput::Input (const TopologyData& topologyData)
     {
         exit(1);
     }
+    
+    std::cout << "Anzahl der Zwischenstopps eingeben: ";
+    std::cin >> inputData.numTransitCities;
 
-    for (unsigned int i = 1; i <= 5; ++i)
+    for (unsigned int i = 1; i <= inputData.numTransitCities; ++i)
     {
         std::cout << "Bitte " << i << ". Zwischenstopp eingeben: ";
         std::string transitCity;

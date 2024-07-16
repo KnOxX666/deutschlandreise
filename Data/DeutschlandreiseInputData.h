@@ -6,4 +6,5 @@ struct DeutschlandreiseInputData
 {
     std::string originAndDestinationCity;
     std::vector<std::string> transitCities;
+    size_t numTransitCities;
 };

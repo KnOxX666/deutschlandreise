@@ -1,0 +1,15 @@
+{
+    "area": "Deutschlandreise",
+    "directed": false,
+    "multigraph": false,
+    "nodes": [
+    {"id": "A", "x": "Z", "y": 1},
+    {"id": "B", "x": "Y", "y": 1},
+    {"id": "C", "x": "X", "y": 1}
+    ],
+    "links": [
+    {"source": "A", "target": "B", "weight": 2, "flight": false},
+    {"source": "A", "target": "C", "weight": 10, "flight": false},
+    {"source": "B", "target": "C", "weight": 2, "flight": false}
+    ]
+}

@@ -11,15 +11,19 @@ JourneyCalculator::JourneyCalculator(const DeutschlandreiseData& _data)
     , graph(nullptr)
 {
     CreateGraph();
-    int i = 0;
-    for (auto& node : *graph)
+    if (data.IsDetailDebug())
     {
-        std::cout << data.GetTopologyData().nodes[i]->cityName << "[" << i << "]" << std::endl;
-        for (auto& neighbor : node)
+        //Print Graph
+        int i = 0;
+        for (auto& node : *graph)
         {
-            std::cout << "    " << data.GetTopologyData().nodes[neighbor.to]->cityName << std::endl;
+            std::cout << data.GetTopologyData().nodes[i]->cityName << "[" << i << "]" << std::endl;
+            for (auto& neighbor : node)
+            {
+                std::cout << "    " << data.GetTopologyData().nodes[neighbor.to]->cityName << std::endl;
+            }
+            ++i;
         }
-        ++i;
     }
 }
 
@@ -31,6 +35,11 @@ void JourneyCalculator::CreateGraph()
     {
         // add all edges to corresponding origin nodes:
         (*graph)[edge->origin->id].push_back(JourneyCalculator::Edge(edge->destination->id, edge->weight));
+        if (not edge->isFlight)
+        {
+            // the json-data has no returning ways, so create them:
+            (*graph)[edge->destination->id].push_back(JourneyCalculator::Edge(edge->origin->id, edge->weight));
+        }
     }
 }
 
@@ -41,27 +50,6 @@ std::vector<std::string> JourneyCalculator::CreateCompleteRouteCandidate(const s
     for (const auto& city : transitCitiesRouteCandidate) journey.push_back(city);
     journey.push_back(data.GetDeutschlandreiseInputData().originAndDestinationCity);
     return journey;
-}
-
-void JourneyCalculator::Calculate()
-{
-    std::vector<std::string> transitCities = data.GetDeutschlandreiseInputData().transitCities;
-    std::cout << "Calc from " << data.GetTopologyData().nodes[0]->cityName << " to " << data.GetTopologyData().nodes[137]->cityName << std::endl;
-    auto result = Dijkstra(148, 149);
-    std::cout << "distancee = " << result.first << std::endl;
-    std::cout << "shortest route = ";
-    for (auto& cityId : result.second) 
-    {
-        std::cout << data.GetTopologyData().nodes[cityId]->cityName << " - " << std::endl;
-    }
-    /*
-    do 
-    {
-        std::vector<std::string> routeCandidate = CreateCompleteRouteCandidate(transitCities);
-        //int length = CalculatePathLength(routeCandidate);
-        
-    } while (std::next_permutation(transitCities.begin(), transitCities.end()));
-    */
 }
 
 void PrintRoute(const std::vector<std::string>& routeCandidate)
@@ -76,16 +64,56 @@ void PrintRoute(const std::vector<std::string>& routeCandidate)
     std::cout << std::endl;
 }
 
+std::vector<std::pair<int,std::vector<int>>> JourneyCalculator::Calculate()
+{
+    std::vector<std::string> transitCities = data.GetDeutschlandreiseInputData().transitCities;
+
+    std::vector<std::pair<int,std::vector<int>>> bestResults;
+    int minDistance = -1;
+    do 
+    {
+        std::vector<std::string> routeCandidate = CreateCompleteRouteCandidate(transitCities);
+        if (data.IsDebug())
+        {
+            std::cout << "    Trying route: ";
+            PrintRoute(routeCandidate);
+        }
+        std::vector<std::pair<int,std::vector<int>>> results;
+        for (size_t i = 1; i < routeCandidate.size(); ++i)
+        {
+            auto result = CalculateShortestRouteUsingDijkstra(data.GetTopologyData().FindNodeData(routeCandidate[i - 1])->id,
+                                                              data.GetTopologyData().FindNodeData(routeCandidate[i])->id);
+            results.push_back(result);
+        }
+        int currentDistance = 0;
+        for (auto& result : results)
+        {
+            currentDistance += result.first; 
+        }
+        if (data.IsDebug()) std::cout << "      -> distance: " << currentDistance;
+        if (minDistance == -1 || currentDistance < minDistance)
+        {
+            minDistance = currentDistance;
+            bestResults = results;
+            if (data.IsDebug()) std::cout << " *** new optimum! ***";
+        } 
+        if (data.IsDebug()) std::cout << std::endl;
+    } while (std::next_permutation(transitCities.begin(), transitCities.end()));
+    
+    return bestResults;
+}
+
 JourneyCalculator::Node* JourneyCalculator::DetermineMinNodeAndRemove(
     std::vector<JourneyCalculator::Node*>& nodes) const
 {
-    int minDistance = -1;
+    int minDistance = nodes.front()->distance;
     std::vector<Node*>::iterator bestCandidate = nodes.begin();
     for (std::vector<Node*>::iterator it = nodes.begin(); it != nodes.end(); ++it)
     {
         if (minDistance == -1 || (*it)->distance < minDistance)
         {
             bestCandidate = it;
+            minDistance = (*it)->distance;
         }
     }
     Node* minNode = *bestCandidate;
@@ -102,7 +130,7 @@ bool JourneyCalculator::IsContained(const std::vector<Node*>& nodes, int id) con
     return false;
 }
 
-std::pair<int,std::vector<int>> JourneyCalculator::Dijkstra(int originId, int destinationId) const
+std::pair<int,std::vector<int>> JourneyCalculator::CalculateShortestRouteUsingDijkstra(int originId, int destinationId) const
 {
     std::vector<Node*> nodes;
     for (auto& node : data.GetTopologyData().nodes)
@@ -138,7 +166,15 @@ std::pair<int,std::vector<int>> JourneyCalculator::Dijkstra(int originId, int de
             }
         }
     }
-
+    if (data.IsDetailDebug())
+    {
+        for (auto& node : nodes)
+        {
+            std::cout << data.GetTopologyData().nodes[node->id]->cityName << " ["  << node->id  
+                << "] dist: " << node->distance << " origin: " 
+                << (node->origin == -1 ? "-" : data.GetTopologyData().nodes[node->origin]->cityName) << " [" << node->origin << "]" << std::endl;
+        }
+    }
     std::pair<int, std::vector<int>> resultDistanceAndShortestRoute;
     resultDistanceAndShortestRoute.first = nodes[destinationId]->distance;
 
@@ -151,6 +187,7 @@ std::pair<int,std::vector<int>> JourneyCalculator::Dijkstra(int originId, int de
         currentNode = nodes[currentNode->origin];
     }
     resultDistanceAndShortestRoute.second.push_back(currentNode->id);
+    std::reverse(resultDistanceAndShortestRoute.second.begin(), resultDistanceAndShortestRoute.second.end());
 
     for (auto node : nodes)
     {

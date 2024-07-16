@@ -8,7 +8,7 @@ class JourneyCalculator
 {
 public: 
     explicit JourneyCalculator(const DeutschlandreiseData& _data);
-    void Calculate();
+    std::vector<std::pair<int,std::vector<int>>> Calculate();
 
 private:
     struct Node {
@@ -35,7 +35,7 @@ private:
     void CreateGraph();
     bool IsContained(const std::vector<Node*>& nodes, int id) const;
     Node* DetermineMinNodeAndRemove(std::vector<Node*>& nodes) const;
-    std::pair<int,std::vector<int>> Dijkstra(int originId, int destinationId) const;
+    std::pair<int,std::vector<int>> CalculateShortestRouteUsingDijkstra(int originId, int destinationId) const;
     const DeutschlandreiseData& data;
     
     

@@ -4,9 +4,9 @@
 DeutschlandreiseData::DeutschlandreiseData() 
     : topologyData(nullptr)
     , isDebug(false)
+    , isDetailDebug(false)
     , isTest(false)
 {
-
 }
 
 DeutschlandreiseData::~DeutschlandreiseData()
@@ -43,6 +43,16 @@ void DeutschlandreiseData::SetIsDebug(bool _isDebug)
 bool DeutschlandreiseData::IsDebug() const
 {
     return isDebug;
+}
+
+void DeutschlandreiseData::SetIsDetailDebug(bool _isDetailDebug)
+{
+    isDetailDebug = _isDetailDebug;  
+}
+
+bool DeutschlandreiseData::IsDetailDebug() const
+{
+    return isDetailDebug;
 }
 
 void DeutschlandreiseData::SetIsTest(bool _isTest)

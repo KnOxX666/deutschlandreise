@@ -8,7 +8,7 @@
 const NodeData* FindNodeData(const std::vector<NodeData*>& nodes, const std::string& idSearchNode)
 {
     std::vector<NodeData*>::const_iterator it = std::find_if(nodes.begin(), nodes.end(), [=] (const NodeData* nodeData) { return nodeData->cityName == idSearchNode; } );
-    if (it == nodes.end()) abort();
+    if (it == nodes.end()) return nullptr;
     return *it;
 }
 
@@ -25,6 +25,8 @@ TopologyData* JSonLoader::Load()
     {
         NodeData* node = new NodeData();
         node->cityName = topology["nodes"][i]["id"].asString();
+        node->locationInfo = "(" + topology["nodes"][i]["x"].asString();
+        node->locationInfo += topology["nodes"][i]["y"].asString() + ")";
         node->id = idCity;
         topologyData->nodes.push_back(node);
         ++idCity;
@@ -38,7 +40,16 @@ TopologyData* JSonLoader::Load()
         edgeData->weight = topology["links"][i]["weight"].asInt();
         edgeData->isFlight = topology["links"][i]["flight"].asBool();
         topologyData->edges.push_back(edgeData);
-        if (edgeData->origin == nullptr || edgeData->destination == nullptr) abort();
+        if(edgeData->origin == nullptr)
+        {
+            std::cout << "Error: '" << topology["links"][i]["source"].asString() << "' not a known city given as 'source' in json-file." << std::endl;
+            exit(1);
+        }
+        if(edgeData->destination == nullptr)
+        {
+            std::cout << "Error: '" << topology["links"][i]["target"].asString() << "' not a known city given as 'target' in json-file." << std::endl;
+            exit(1);
+        }
     }
     
     return topologyData;

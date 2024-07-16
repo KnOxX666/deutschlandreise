@@ -15,6 +15,8 @@ public:
     void SetTopologyData(TopologyData* topologyData);
     void SetIsDebug(bool isDebug);
     bool IsDebug() const;
+    void SetIsDetailDebug(bool isDetailDebug);
+    bool IsDetailDebug() const;
     void SetIsTest(bool isTest);
     bool IsTest() const;
     
@@ -22,5 +24,6 @@ private:
     DeutschlandreiseInputData deutschlandreiseInputData;
     TopologyData* topologyData;
     bool isDebug;
+    bool isDetailDebug;
     bool isTest;
 };

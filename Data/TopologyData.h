@@ -5,6 +5,7 @@ struct NodeData
 {
     std::string cityName;
     size_t id;
+    std::string locationInfo;
 };
 
 struct EdgeData
