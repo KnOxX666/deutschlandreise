@@ -1,13 +1,17 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <map>
+#include "AdjGraph.h"
 
+struct DijkstraResult;
 class DeutschlandreiseData;
 
 class JourneyCalculator
 {
 public: 
     explicit JourneyCalculator(const DeutschlandreiseData& _data);
+    ~JourneyCalculator();
     std::vector<std::pair<int,std::vector<int>>> Calculate();
 
 private:
@@ -20,25 +24,15 @@ private:
             , distance(-1)
             , origin(-1){}         
     };    
-    
-    struct Edge
-    {
-        int to;
-        int weight;
-        Edge(int _to, int _weight) 
-            : to(_to)
-            , weight(_weight){}
-    };
 
     std::vector<std::string> CreateCompleteRouteCandidate(const std::vector<std::string>& transitCitiesRouteCandidate);
-    int CalculatePathLength(const std::vector<std::string>& routeCandidate) const;
-    void CreateGraph();
     bool IsContained(const std::vector<Node*>& nodes, int id) const;
     Node* DetermineMinNodeAndRemove(std::vector<Node*>& nodes) const;
-    std::pair<int,std::vector<int>> CalculateShortestRouteUsingDijkstra(int originId, int destinationId) const;
+    std::pair<int,std::vector<int>> CalculateShortestRouteUsingDijkstra(int originId, int destinationId);
     const DeutschlandreiseData& data;
     
-    
-    typedef std::vector<std::vector<Edge>> AdjList;
     AdjList* graph;
+
+    // origin id is key
+    std::map<int, DijkstraResult*> dijstraResults;
 };

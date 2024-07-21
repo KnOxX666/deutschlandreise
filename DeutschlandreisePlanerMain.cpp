@@ -6,6 +6,7 @@
 #include "Data/TopologyData.h"
 #include <iostream>
 #include <cstring>
+#include <chrono>
 
 void PrintRoute (
     const std::vector<NodeData*>& nodes, 
@@ -23,7 +24,8 @@ void PrintRoute (
 
 void PrintResults(
     const std::vector<NodeData*>& nodes, 
-    const std::vector<std::pair<int,std::vector<int>>>& results)
+    const std::vector<std::pair<int,std::vector<int>>>& results,
+    const std::chrono::milliseconds& elapsed)
 {
     std::cout << "---====================================================================================================---" << std::endl;
     std::cout << "Optimale Reiseroute: ";
@@ -47,6 +49,7 @@ void PrintResults(
         std::cout << "        ";
         PrintRoute(nodes, result.second);
     }
+    std::cout << "Took " << elapsed.count() << " ms." << std::endl;
     std::cout << "---====================================================================================================---" << std::endl;
 }
 
@@ -67,6 +70,7 @@ int main(int argc, char *argv[])
     {
         DeutschlandreiseInputData testInputData;
         testInputData.originAndDestinationCity = "Bremen";
+        //testInputData.transitCities = {"Hamburg", "Dortmund", "Kiel", "Schwerin", "Bielefeld", "Mainz", "Zwolle", "Emden", "Hannover", "Kassel"};
         testInputData.transitCities = {"Hamburg", "Dortmund", "Kiel", "Schwerin", "Bielefeld"};
         data.SetDeutschlandreiseInputData(testInputData);
     }
@@ -75,7 +79,11 @@ int main(int argc, char *argv[])
         data.SetDeutschlandreiseInputData(JourneyInput().Input(data.GetTopologyData()));
     }
     
+    auto start = std::chrono::system_clock::now();
     std::vector<std::pair<int,std::vector<int>>> results = JourneyCalculator(data).Calculate();
-    PrintResults(data.GetTopologyData().nodes, results);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    PrintResults(data.GetTopologyData().nodes, results, elapsed);
     return 0;
 }

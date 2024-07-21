@@ -52,6 +52,10 @@ DeutschlandreiseInputData JourneyInput::Input (const TopologyData& topologyData)
     
     std::cout << "Anzahl der Zwischenstopps eingeben: ";
     std::cin >> inputData.numTransitCities;
+    if (inputData.numTransitCities > 10)
+    {
+        std::cout << "Warnung: Die Berechnung mehr als 10 Zwischenstopps kann sehr lange dauern!" << std::endl;
+    }
 
     for (unsigned int i = 1; i <= inputData.numTransitCities; ++i)
     {

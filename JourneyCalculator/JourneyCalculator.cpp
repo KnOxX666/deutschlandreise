@@ -3,14 +3,14 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include "Dijkstra.h"
 #include "../Data/DeutschlandreiseData.h"
 #include "../Data/TopologyData.h"
 
 JourneyCalculator::JourneyCalculator(const DeutschlandreiseData& _data)
     : data(_data)
-    , graph(nullptr)
+    , graph(AdjGraph().CreateGraph(data.GetTopologyData()))
 {
-    CreateGraph();
     if (data.IsDetailDebug())
     {
         //Print Graph
@@ -27,19 +27,12 @@ JourneyCalculator::JourneyCalculator(const DeutschlandreiseData& _data)
     }
 }
 
-void JourneyCalculator::CreateGraph()
+JourneyCalculator::~JourneyCalculator()
 {
     delete graph;
-    graph = new AdjList(data.GetTopologyData().nodes.size());
-    for (auto& edge : data.GetTopologyData().edges)
+    for (auto result : dijstraResults)
     {
-        // add all edges to corresponding origin nodes:
-        (*graph)[edge->origin->id].push_back(JourneyCalculator::Edge(edge->destination->id, edge->weight));
-        if (not edge->isFlight)
-        {
-            // the json-data has no returning ways, so create them:
-            (*graph)[edge->destination->id].push_back(JourneyCalculator::Edge(edge->origin->id, edge->weight));
-        }
+        delete result.second;
     }
 }
 
@@ -103,96 +96,43 @@ std::vector<std::pair<int,std::vector<int>>> JourneyCalculator::Calculate()
     return bestResults;
 }
 
-JourneyCalculator::Node* JourneyCalculator::DetermineMinNodeAndRemove(
-    std::vector<JourneyCalculator::Node*>& nodes) const
+std::pair<int,std::vector<int>> JourneyCalculator::CalculateShortestRouteUsingDijkstra(int originId, int destinationId)
 {
-    int minDistance = nodes.front()->distance;
-    std::vector<Node*>::iterator bestCandidate = nodes.begin();
-    for (std::vector<Node*>::iterator it = nodes.begin(); it != nodes.end(); ++it)
+    DijkstraResult* dijstraResult = nullptr;
+    std::map<int, DijkstraResult*>::const_iterator it = dijstraResults.find(originId);
+    if (it == dijstraResults.end())
     {
-        if (minDistance == -1 || (*it)->distance < minDistance)
-        {
-            bestCandidate = it;
-            minDistance = (*it)->distance;
-        }
+        dijstraResult = Dijkstra().Create(*graph,data.GetTopologyData().nodes, originId);
+        dijstraResults[originId] = dijstraResult;
     }
-    Node* minNode = *bestCandidate;
-    nodes.erase(bestCandidate);
-    return minNode;
-}
-
-bool JourneyCalculator::IsContained(const std::vector<Node*>& nodes, int id) const
-{
-    for (auto node : nodes)
+    else
     {
-        if (node->id == id) return true;
-    }
-    return false;
-}
-
-std::pair<int,std::vector<int>> JourneyCalculator::CalculateShortestRouteUsingDijkstra(int originId, int destinationId) const
-{
-    std::vector<Node*> nodes;
-    for (auto& node : data.GetTopologyData().nodes)
-    {
-        nodes.push_back(new Node(node->id));
+        dijstraResult = it->second;
     }
     
-    nodes[originId]->distance = 0; // startpoint's distance always 0.
-
-    std::vector<Node*> toProcess;
-    toProcess.push_back(nodes[originId]);
-    while (not toProcess.empty())
-    {
-        Node* minNode = DetermineMinNodeAndRemove(toProcess);
-        for (auto& neighbor : (*graph)[minNode->id])
-        {
-            int weight = neighbor.weight;
-            int newDistance = minNode->distance + weight;
-            if (nodes[neighbor.to]->distance == -1)
-            {
-                toProcess.push_back(nodes[neighbor.to]);
-                nodes[neighbor.to]->distance = newDistance;
-                nodes[neighbor.to]->origin = minNode->id;
-            }
-            else
-            {
-                if (   IsContained(toProcess, neighbor.to) 
-                    && nodes[neighbor.to]->distance > newDistance)
-                {
-                    nodes[neighbor.to]->distance = newDistance;
-                    nodes[neighbor.to]->origin = minNode->id;
-                }
-            }
-        }
-    }
     if (data.IsDetailDebug())
     {
-        for (auto& node : nodes)
+        for (auto& node : dijstraResult->nodeResults)
         {
             std::cout << data.GetTopologyData().nodes[node->id]->cityName << " ["  << node->id  
                 << "] dist: " << node->distance << " origin: " 
                 << (node->origin == -1 ? "-" : data.GetTopologyData().nodes[node->origin]->cityName) << " [" << node->origin << "]" << std::endl;
         }
     }
+
     std::pair<int, std::vector<int>> resultDistanceAndShortestRoute;
-    resultDistanceAndShortestRoute.first = nodes[destinationId]->distance;
+    resultDistanceAndShortestRoute.first = dijstraResult->nodeResults[destinationId]->distance;
 
     // create shortest found route from destination node to origin route:
 
-    Node* currentNode = nodes[destinationId];
+    DijkstraNodeResult* currentNode = dijstraResult->nodeResults[destinationId];
     while (currentNode->id != originId && currentNode->origin != -1)
     {
         resultDistanceAndShortestRoute.second.push_back(currentNode->id);
-        currentNode = nodes[currentNode->origin];
+        currentNode = dijstraResult->nodeResults[currentNode->origin];
     }
     resultDistanceAndShortestRoute.second.push_back(currentNode->id);
     std::reverse(resultDistanceAndShortestRoute.second.begin(), resultDistanceAndShortestRoute.second.end());
-
-    for (auto node : nodes)
-    {
-        delete node;
-    }
     
     return resultDistanceAndShortestRoute;
 }
