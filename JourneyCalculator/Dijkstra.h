@@ -16,6 +16,14 @@ struct DijkstraNodeResult {
 
 struct DijkstraResult
 {
+    DijkstraResult() = default;
+    ~DijkstraResult() 
+    {
+        for (auto result : nodeResults)
+        {
+            delete result;
+        }
+    }
     std::vector<DijkstraNodeResult*> nodeResults;
 };
 
